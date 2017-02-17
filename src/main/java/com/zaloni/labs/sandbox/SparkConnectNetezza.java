@@ -1,10 +1,12 @@
-package com.datatype.conversion;
+package com.zaloni.labs.sandbox;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.hive.HiveContext;
+import org.apache.spark.sql.jdbc.JdbcDialects;
 
 import java.util.List;
 import java.util.Properties;
@@ -23,9 +25,8 @@ public class SparkConnectNetezza{
         /*
         Source table, from where metadata and data will be fetched. This is from Hive in our scenario
          */
-        //String hiveSchemaNameDotTableName = "schemaName.TableName"; //Hive SchemaName.TableName
-        String hiveSchemaNameDotTableName = "pranab_schema.Pranab_Delimited_1";
-
+        String hiveSchemaNameDotTableName = "schemaName.TableName"; //Hive SchemaName.TableName
+        
         sqlContext.setConf("hive.metastore.filter.hook", "org.apache.hadoop.hive.metastore.DefaultMetaStoreFilterHookImpl");
 
         String hql = "select * from "+hiveSchemaNameDotTableName;
@@ -37,6 +38,9 @@ public class SparkConnectNetezza{
         prop.setProperty("driver", "org.netezza.Driver");
         sqlc.setConf(prop);
         DataFrame usersDf1 = sqlc.read().json(usersDf.toJSON());
+
+        JdbcDialects.registerDialect(new NetezzaDialect());
+
         usersDf1.write().mode("overwrite").jdbc(jdbcUrl, "destinationTableName", prop);
     }
 }
